@@ -183,9 +183,8 @@ export class Store {
       SELECT v.rowid, v.distance, n.id, n.title
       FROM nodes_vec v
       JOIN nodes n ON n.rowid = v.rowid
-      WHERE embedding MATCH ?
+      WHERE embedding MATCH ? AND k = ?
       ORDER BY distance
-      LIMIT ?
     `).all(Buffer.from(embedding.buffer), limit).map((r: any) => ({
       nodeId: r.id,
       title: r.title,
