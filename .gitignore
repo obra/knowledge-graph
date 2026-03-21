@@ -4,3 +4,4 @@ dist/
 *.db-journal
 /vault/
 data/
+docs/superpowers/
