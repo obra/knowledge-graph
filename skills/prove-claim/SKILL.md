@@ -31,9 +31,9 @@ All tools are prefixed with `kg_` and accessed via MCP:
 
 Break the claim into entities and relationships. Identify what you need to find.
 
-Example claim: *"James Cham's investment thesis connects to the Lethal Trifecta concept"*
-- Entities: James Cham, Lethal Trifecta
-- Relationship: connection between investment thesis and the concept
+Example claim: *"Alice's research influenced the Widget Theory concept"*
+- Entities: Alice, Widget Theory
+- Relationship: research influence on the concept
 
 ### Step 2: Find the entities
 
@@ -41,7 +41,7 @@ Use `kg_search` to locate relevant nodes. Use `kg_node` to read their content.
 
 - Search semantically first — it finds conceptually related content
 - Fall back to `kg_search` with `fulltext: true` for exact terms
-- Names are fuzzy-matched: "James" will find "James Cham"
+- Names are fuzzy-matched: "Alice" will find "Alice Smith"
 
 ### Step 3: Find connections
 
@@ -80,7 +80,7 @@ When a question involves **who** originated, created, or owns something, you MUS
 
 Idea nodes have frontmatter and content that records provenance:
 - `Originated by: Alice` / `Originated by: Bob` — in the Status section
-- `source:` field in frontmatter — where the idea came from (e.g., `whatsapp/Harper Reed`)
+- `source:` field in frontmatter — where the idea came from (e.g., `whatsapp/Some Person`)
 - `first_mentioned:` — when it first appeared
 - Conversation History sections name who proposed what
 
