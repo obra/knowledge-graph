@@ -8,6 +8,7 @@ import { IndexPipeline } from '../lib/index-pipeline.js';
 import { KnowledgeGraph } from '../lib/graph.js';
 import { Search } from '../lib/search.js';
 import { resolveNodeName } from '../lib/resolve.js';
+import { VaultWriter } from '../lib/writer.js';
 import { mkdirSync } from 'fs';
 
 const config = resolveConfig({});
@@ -16,6 +17,7 @@ mkdirSync(config.dataDir, { recursive: true });
 const store = new Store(config.dbPath);
 const embedder = new Embedder();
 const search = new Search(store, embedder);
+const writer = new VaultWriter(config.vaultPath, store);
 let embedderReady = false;
 
 const server = new McpServer({
@@ -227,6 +229,55 @@ server.tool(
     }
     const central = kg.centralNodes(limit ?? 20, communityNodeIds);
     return { content: [{ type: 'text', text: JSON.stringify(central, null, 2) }] };
+  }
+);
+
+server.tool(
+  'kg_create_node',
+  'Create a new node in the vault. Writes a markdown file with frontmatter and indexes it.',
+  {
+    title: z.string().describe('Node title (becomes the filename)'),
+    directory: z.string().optional().describe('Directory within vault (e.g., "Concepts", "People", "Ideas"). Omit for vault root.'),
+    content: z.string().describe('Markdown content for the node body'),
+    frontmatter: z.record(z.unknown()).optional().describe('YAML frontmatter fields (type, tags, status, related, etc.)'),
+  },
+  async ({ title, directory, content, frontmatter }) => {
+    const relPath = writer.createNode({
+      title,
+      directory,
+      frontmatter: frontmatter ?? {},
+      content,
+    });
+    return { content: [{ type: 'text', text: JSON.stringify({ created: relPath }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'kg_annotate_node',
+  'Append content to an existing node. Use for agent notes, observations, or additional context.',
+  {
+    name: z.string().describe('Node name or ID (fuzzy matched)'),
+    content: z.string().describe('Markdown content to append'),
+  },
+  async ({ name, content }) => {
+    const nodeId = requireMatch(name);
+    writer.annotateNode(nodeId, content);
+    return { content: [{ type: 'text', text: JSON.stringify({ annotated: nodeId }, null, 2) }] };
+  }
+);
+
+server.tool(
+  'kg_add_link',
+  'Add a wiki link from one node to another with context. Appends to the source file and creates an edge.',
+  {
+    source: z.string().describe('Source node name or ID'),
+    target: z.string().describe('Target node reference (e.g., "People/Alice Smith" or "Widget Theory")'),
+    context: z.string().describe('Why this link exists — the sentence or note explaining the connection'),
+  },
+  async ({ source, target, context }) => {
+    const sourceId = requireMatch(source);
+    writer.addLink(sourceId, target, context);
+    return { content: [{ type: 'text', text: JSON.stringify({ linked: { from: sourceId, to: target } }, null, 2) }] };
   }
 );
 
