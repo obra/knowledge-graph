@@ -239,7 +239,7 @@ server.tool(
     title: z.string().describe('Node title (becomes the filename)'),
     directory: z.string().optional().describe('Directory within vault (e.g., "Concepts", "People", "Ideas"). Omit for vault root.'),
     content: z.string().describe('Markdown content for the node body'),
-    frontmatter: z.record(z.unknown()).optional().describe('YAML frontmatter fields (type, tags, status, related, etc.)'),
+    frontmatter: z.record(z.string(), z.any()).optional().describe('YAML frontmatter fields (type, tags, status, related, etc.)'),
   },
   async ({ title, directory, content, frontmatter }) => {
     const relPath = writer.createNode({
