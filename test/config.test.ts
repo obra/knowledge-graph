@@ -47,4 +47,26 @@ describe('resolveConfig', () => {
     const config = resolveConfig({});
     expect(config.dataDir).toContain('.local/share/knowledge-graph');
   });
+
+  it('ignores unexpanded KG_DATA_DIR template and uses XDG default', () => {
+    process.env.KG_VAULT_PATH = '/tmp/vault';
+    process.env.XDG_DATA_HOME = '/tmp/xdg';
+    process.env.KG_DATA_DIR = '${KG_DATA_DIR}';
+    const config = resolveConfig({});
+    expect(config.dataDir).toBe('/tmp/xdg/knowledge-graph');
+  });
+
+  it('throws when KG_VAULT_PATH is an unexpanded template', () => {
+    process.env.KG_VAULT_PATH = '${KG_VAULT_PATH}';
+    delete process.env.KG_DATA_DIR;
+    expect(() => resolveConfig({})).toThrow(/vault/i);
+  });
+
+  it('ignores relative KG_DATA_DIR env paths and uses XDG default', () => {
+    process.env.KG_VAULT_PATH = '/tmp/vault';
+    process.env.XDG_DATA_HOME = '/tmp/xdg';
+    process.env.KG_DATA_DIR = 'relative/path';
+    const config = resolveConfig({});
+    expect(config.dataDir).toBe('/tmp/xdg/knowledge-graph');
+  });
 });

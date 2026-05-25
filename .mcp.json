@@ -1,11 +1,10 @@
 {
   "mcpServers": {
     "knowledge-graph": {
-      "command": "npx",
-      "args": ["tsx", "${CLAUDE_PLUGIN_ROOT}/src/mcp/index.ts"],
+      "command": "${CLAUDE_PLUGIN_ROOT}/node_modules/.bin/tsx",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/src/mcp/index.ts"],
       "env": {
-        "KG_VAULT_PATH": "${KG_VAULT_PATH}",
-        "KG_DATA_DIR": "${KG_DATA_DIR}"
+        "KG_VAULT_PATH": "${KG_VAULT_PATH}"
       }
     }
   }
