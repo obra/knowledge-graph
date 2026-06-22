@@ -1,0 +1,16 @@
+services:
+  kg:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: knowledge_graph
+    entrypoint: ["tail", "-f", "/dev/null"]
+    environment:
+      - KG_VAULT_PATH=/vault
+      - KG_DATA_DIR=/root/.local/share/knowledge-graph
+    volumes:
+      - ../obsidian-vault:/vault:ro
+      - kg_data:/root/.local/share/knowledge-graph
+
+volumes:
+  kg_data:
