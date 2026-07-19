@@ -39,6 +39,18 @@ describe('Embedder', () => {
     expect(text).toContain('theoretical framework');
     expect(text).not.toContain('More details here');
   });
+
+  it('includes the body paragraph, not the title heading, when content has a gray-matter-style leading newline', () => {
+    // gray-matter leaves a leading newline after stripping YAML frontmatter,
+    // so the raw content starts with '\n# Widget Theory'.
+    const text = Embedder.buildEmbeddingText(
+      'Widget Theory',
+      [],
+      '\n# Widget Theory\n\nA theoretical framework for understanding component interactions.\n\n## Section',
+    );
+    expect(text).toContain('A theoretical framework for understanding component interactions');
+    expect(text).not.toContain('# Widget Theory');
+  });
 });
 
 function cosineSimilarity(a: Float32Array, b: Float32Array): number {

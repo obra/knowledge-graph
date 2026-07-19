@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import * as sqliteVec from 'sqlite-vec';
 import type { ParsedNode, ParsedEdge, SearchResult } from './types.js';
+import { firstBodyParagraph } from './text.js';
 
 export class Store {
   db: Database.Database;
@@ -281,7 +282,7 @@ export class Store {
 }
 
 function firstParagraph(content: string, maxLen: number): string {
-  const para = content.split(/\n\n+/).find(p => p.trim().length > 0 && !p.startsWith('#'));
+  const para = firstBodyParagraph(content);
   if (!para) return '';
   const trimmed = para.trim();
   return trimmed.length > maxLen ? trimmed.slice(0, maxLen) + '...' : trimmed;

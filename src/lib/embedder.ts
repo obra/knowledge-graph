@@ -1,4 +1,5 @@
 import { pipeline, type FeatureExtractionPipeline } from '@huggingface/transformers';
+import { firstBodyParagraph } from './text.js';
 
 const MODEL = 'Xenova/all-MiniLM-L6-v2';
 
@@ -32,7 +33,7 @@ export class Embedder {
     tags: string[],
     content: string,
   ): string {
-    const firstParagraph = content.split(/\n\n+/)[0] ?? '';
+    const firstParagraph = firstBodyParagraph(content).trim();
     const parts = [title];
     if (tags.length > 0) {
       parts.push(tags.join(', '));

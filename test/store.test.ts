@@ -110,6 +110,23 @@ describe('Store', () => {
     expect(results[0].excerpt).toContain('framework');
   });
 
+  it('vector search excerpt skips the title heading when content has a gray-matter-style leading newline', () => {
+    store.upsertNode({
+      id: 'test.md',
+      title: 'Widget Theory',
+      // gray-matter leaves a leading newline after stripping frontmatter,
+      // so a naive split on '\n\n' yields '\n# Widget Theory' as paragraph 0.
+      content: '\n# Widget Theory\n\nA framework for understanding component interactions.\n\n## Section',
+      frontmatter: {},
+    });
+    const embedding = new Float32Array(384).fill(0.1);
+    store.upsertEmbedding('test.md', embedding);
+    const results = store.searchVector(embedding, 5);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].excerpt).toContain('A framework for understanding component interactions');
+    expect(results[0].excerpt).not.toContain('# Widget Theory');
+  });
+
   it('counts edges for a node', () => {
     store.upsertNode({ id: 'a.md', title: 'A', content: '', frontmatter: {} });
     store.upsertNode({ id: 'b.md', title: 'B', content: '', frontmatter: {} });
