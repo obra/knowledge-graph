@@ -86,6 +86,25 @@ describe('VaultWriter', () => {
         content: 'Duplicate.',
       })).toThrow(/already exists/);
     });
+
+    it('rejects a directory that escapes the vault via ../', () => {
+      expect(() => writer.createNode({
+        title: 'Evil',
+        directory: '../../etc',
+        frontmatter: {},
+        content: 'pwned',
+      })).toThrow(/Path escape attempt/);
+
+      expect(existsSync(join(tempVault, '..', '..', 'etc', 'Evil.md'))).toBe(false);
+    });
+
+    it('rejects a title that escapes the vault via ../', () => {
+      expect(() => writer.createNode({
+        title: '../../../tmp/evil',
+        frontmatter: {},
+        content: 'pwned',
+      })).toThrow(/Path escape attempt/);
+    });
   });
 
   describe('annotateNode', () => {
@@ -115,6 +134,10 @@ describe('VaultWriter', () => {
     it('throws if the node does not exist', () => {
       expect(() => writer.annotateNode('nonexistent.md', 'stuff')).toThrow(/not found/);
     });
+
+    it('rejects a nodeId that escapes the vault via ../', () => {
+      expect(() => writer.annotateNode('../../etc/passwd', 'pwned')).toThrow(/Path escape attempt/);
+    });
   });
 
   describe('addLink', () => {
@@ -143,6 +166,11 @@ describe('VaultWriter', () => {
 
       const edges = store.getEdgesFrom('Source.md');
       expect(edges.some(e => e.targetId === 'People/Alice Smith.md')).toBe(true);
+    });
+
+    it('rejects a sourceId that escapes the vault via ../', () => {
+      expect(() => writer.addLink('../../etc/passwd', 'People/Alice Smith', 'pwned'))
+        .toThrow(/Path escape attempt/);
     });
   });
 });

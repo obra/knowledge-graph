@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'fs';
-import { join, basename } from 'path';
+import { basename, dirname, isAbsolute, relative, resolve } from 'path';
 import matter from 'gray-matter';
 import type { Store } from './store.js';
 
@@ -16,15 +16,28 @@ export class VaultWriter {
     private store: Store,
   ) {}
 
-  createNode(opts: CreateNodeOptions): string {
-    const dir = opts.directory
-      ? join(this.vaultPath, opts.directory)
-      : this.vaultPath;
-    mkdirSync(dir, { recursive: true });
+  /**
+   * Resolves a vault-relative path to an absolute path, guaranteeing the
+   * result stays within vaultPath. Rejects `../` segments (and absolute
+   * path overrides) that would otherwise let a caller escape the vault.
+   */
+  private resolveInVault(relPath: string): string {
+    const absPath = resolve(this.vaultPath, relPath);
+    const rel = relative(this.vaultPath, absPath);
 
+    if (rel.startsWith('..') || isAbsolute(rel)) {
+      throw new Error(`Path escape attempt: ${relPath}`);
+    }
+
+    return absPath;
+  }
+
+  createNode(opts: CreateNodeOptions): string {
     const filename = `${opts.title}.md`;
     const relPath = opts.directory ? `${opts.directory}/${filename}` : filename;
-    const absPath = join(dir, filename);
+    const absPath = this.resolveInVault(relPath);
+
+    mkdirSync(dirname(absPath), { recursive: true });
 
     if (existsSync(absPath)) {
       throw new Error(`File already exists: ${relPath}`);
@@ -41,7 +54,7 @@ export class VaultWriter {
   }
 
   annotateNode(nodeId: string, content: string): void {
-    const absPath = join(this.vaultPath, nodeId);
+    const absPath = this.resolveInVault(nodeId);
     if (!existsSync(absPath)) {
       throw new Error(`Node not found: ${nodeId}`);
     }
@@ -53,7 +66,7 @@ export class VaultWriter {
   }
 
   addLink(sourceId: string, targetRef: string, context: string): void {
-    const absPath = join(this.vaultPath, sourceId);
+    const absPath = this.resolveInVault(sourceId);
     if (!existsSync(absPath)) {
       throw new Error(`Source node not found: ${sourceId}`);
     }
@@ -74,7 +87,7 @@ export class VaultWriter {
   }
 
   private indexFile(relPath: string): void {
-    const absPath = join(this.vaultPath, relPath);
+    const absPath = this.resolveInVault(relPath);
     const raw = readFileSync(absPath, 'utf-8');
 
     let fm: Record<string, unknown>;
