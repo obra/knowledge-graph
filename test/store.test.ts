@@ -75,6 +75,19 @@ describe('Store', () => {
     expect(results[0].nodeId).toBe('test.md');
   });
 
+  it('full-text search does not throw on hyphenated terms and matches them literally', () => {
+    store.upsertNode({
+      id: 'phase-5-publish.md',
+      title: 'Phase 5 Publish',
+      content: 'Notes on the phase-5-publish milestone rollout',
+      frontmatter: {},
+    });
+    expect(() => store.searchFullText('phase-5-publish')).not.toThrow();
+    const results = store.searchFullText('phase-5-publish');
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].nodeId).toBe('phase-5-publish.md');
+  });
+
   it('tracks sync state', () => {
     store.upsertSync('test.md', 1000);
     expect(store.getSyncMtime('test.md')).toBe(1000);

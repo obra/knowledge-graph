@@ -2,6 +2,22 @@ import Database from 'better-sqlite3';
 import * as sqliteVec from 'sqlite-vec';
 import type { ParsedNode, ParsedEdge, SearchResult } from './types.js';
 
+// FTS5 parses a bound MATCH string as query syntax, not literal text — so
+// characters like '-' are read as operators (e.g. `phase-5-publish` is parsed
+// as `phase -5 -publish`, and `5` is then treated as a column name, which
+// throws "no such column: 5"). Quoting each whitespace-separated token as its
+// own FTS5 phrase makes hyphens (and other operator characters) literal while
+// preserving the implicit AND-across-terms behavior callers rely on for
+// multi-word queries.
+function toFtsMatchQuery(query: string): string {
+  return query
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((term) => `"${term.replace(/"/g, '""')}"`)
+    .join(' ');
+}
+
 export class Store {
   db: Database.Database;
 
@@ -199,7 +215,7 @@ export class Store {
       WHERE nodes_fts MATCH ?
       ORDER BY rank
       LIMIT 20
-    `).all(query).map((r: any) => ({
+    `).all(toFtsMatchQuery(query)).map((r: any) => ({
       nodeId: r.id,
       title: r.title,
       score: -r.rank,
